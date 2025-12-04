@@ -90,6 +90,9 @@ Led* g_led = nullptr;
 Encoder* g_encoder = nullptr;
 display::Oled* g_oled = nullptr;
 
+// Test mode flag (set at startup if TEST_BTN pressed)
+bool g_test_mode = false;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -209,6 +212,11 @@ int main(void)
   MX_USART1_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+
+  // Check if TEST_BTN (PA0) is pressed at startup (active LOW with pull-up)
+  if (HAL_GPIO_ReadPin(TEST_BTN_GPIO_Port, TEST_BTN_Pin) == GPIO_PIN_RESET) {
+    g_test_mode = true;
+  }
 
   // Custom GPIO initialization for encoder pins
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -541,6 +549,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(led_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /*Configure GPIO pin : TEST_BTN_Pin (PA0) */
+  GPIO_InitStruct.Pin = TEST_BTN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(TEST_BTN_GPIO_Port, &GPIO_InitStruct);
 /* USER CODE END MX_GPIO_Init_2 */
 }
 

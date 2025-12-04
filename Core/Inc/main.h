@@ -62,6 +62,10 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
+// Test button pin definition (PA0)
+#define TEST_BTN_Pin GPIO_PIN_0
+#define TEST_BTN_GPIO_Port GPIOA
+
 // Encoder pins definition
 #define ENCODER_A_Pin GPIO_PIN_15
 #define ENCODER_A_GPIO_Port GPIOB

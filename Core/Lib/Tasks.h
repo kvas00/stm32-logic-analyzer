@@ -15,6 +15,9 @@ extern Led* g_led;
 extern Encoder* g_encoder;
 extern display::Oled* g_oled;
 
+// Test mode flag (set at startup if TEST_BTN pressed)
+extern bool g_test_mode;
+
 // Task functions
 void ledTask(void* argument);
 void testTask(void* argument);
