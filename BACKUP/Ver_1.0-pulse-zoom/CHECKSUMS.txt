@@ -1,0 +1,3 @@
+f5afdd33cf08202df96b9e8ea35215c89150fb8bb02a855c40dad33e2183b8c2  encoder-only.bin
+fb6d4be48bade6663dce95dbb6dab6b216e46b0dd7d1b2e096dab00fa05f122f  encoder-only.elf
+db0e104ccdf461542bf400a67fc93d1057786ce2eb4008ebe5f123d6beaf9d88  encoder-only.hex
