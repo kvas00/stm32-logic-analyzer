@@ -200,9 +200,22 @@ void testTask(void* argument) {
             if (g_test_mode) {
                 static int last_position = 0;
                 static bool last_btn_state = true;
+                static bool last_long_press = false;
 
                 int current_position = g_encoder->getPosition();
                 bool button_pressed = g_encoder->isButtonPressed();
+                bool long_press = g_encoder->isLongPress();
+
+                // Handle long press - reset position to 0
+                if (long_press && !last_long_press) {
+                    g_encoder->resetPosition();
+                    current_position = 0;
+                    Log_Printf("[TEST] Position reset to 0 (long press)\r\n");
+                    last_long_press = true;
+                }
+                if (!long_press) {
+                    last_long_press = false;
+                }
 
                 // Display test mode info on OLED
                 if (g_oled != nullptr) {
@@ -213,17 +226,17 @@ void testTask(void* argument) {
                         g_oled->clear();
 
                         // Title
-                        g_oled->drawString(0, 0, "***TEST***", 2);
+                        g_oled->drawString(0, 0, "***TEST MODE***", 1);
 
                         // Position
                         snprintf(buffer, sizeof(buffer), "Position: %d", current_position);
-                        g_oled->drawString(0, 32, buffer, 1);
+                        g_oled->drawString(0, 24, buffer, 1);
 
                         // Button state
                         if (button_pressed) {
-                            g_oled->drawString(0, 48, "BTN: PRESSED", 1);
+                            g_oled->drawString(0, 40, "BTN: PRESSED", 1);
                         } else {
-                            g_oled->drawString(0, 48, "BTN: RELEASED", 1);
+                            g_oled->drawString(0, 40, "BTN: RELEASED", 1);
                         }
 
                         g_oled->update();
