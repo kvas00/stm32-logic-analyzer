@@ -199,67 +199,34 @@ void testTask(void* argument) {
             // If TEST_BTN was pressed at startup, enter test mode
             if (g_test_mode) {
                 static int last_position = 0;
-                static bool last_btn_state = true;
-                static bool last_long_press_test = false;
 
                 int current_position = g_encoder->getPosition();
-                bool button_pressed = g_encoder->isButtonPressed();
-                bool long_press = g_encoder->isLongPress();
 
                 // Display test mode info on OLED
                 if (g_oled != nullptr) {
                     char buffer[32];
 
-                    // Update display if position or button state changed
-                    if (current_position != last_position || button_pressed != last_btn_state) {
+                    // Update display if position changed
+                    if (current_position != last_position) {
                         g_oled->clear();
 
                         // Title
-                        g_oled->drawString(0, 0, "TEST MODE", 1);
+                        g_oled->drawString(0, 0, "***TEST***", 2);
 
                         // Position
-                        snprintf(buffer, sizeof(buffer), "Pos: %d", current_position);
-                        g_oled->drawString(0, 16, buffer, 1);
-
-                        // Button state
-                        if (button_pressed) {
-                            g_oled->drawString(0, 32, "BTN: PRESSED", 1);
-                        } else {
-                            g_oled->drawString(0, 32, "BTN: RELEASED", 1);
-                        }
-
-                        // Instruction
-                        g_oled->drawString(0, 48, "Long: Reset", 1);
+                        snprintf(buffer, sizeof(buffer), "Position: %d", current_position);
+                        g_oled->drawString(0, 32, buffer, 1);
 
                         g_oled->update();
 
                         last_position = current_position;
-                        last_btn_state = button_pressed;
                     }
-                }
-
-                // Handle long press - reset position to 0
-                if (long_press && !last_long_press_test) {
-                    g_encoder->resetPosition();
-                    Log_Printf("[TEST] Position reset to 0\r\n");
-                    last_long_press_test = true;
-                }
-                if (!long_press) {
-                    last_long_press_test = false;
                 }
 
                 // Log encoder changes
                 int delta = g_encoder->getDelta();
                 if (delta != 0) {
                     Log_Printf("[TEST] Pos: %d, Delta: %d\r\n", current_position, delta);
-                }
-
-                if (button_pressed != last_btn_state) {
-                    if (button_pressed) {
-                        Log_Printf("[TEST] Button PRESSED\r\n");
-                    } else {
-                        Log_Printf("[TEST] Button RELEASED\r\n");
-                    }
                 }
 
                 // Run at 100Hz in test mode
