@@ -199,15 +199,17 @@ void testTask(void* argument) {
             // If TEST_BTN was pressed at startup, enter test mode
             if (g_test_mode) {
                 static int last_position = 0;
+                static bool last_btn_state = true;
 
                 int current_position = g_encoder->getPosition();
+                bool button_pressed = g_encoder->isButtonPressed();
 
                 // Display test mode info on OLED
                 if (g_oled != nullptr) {
                     char buffer[32];
 
-                    // Update display if position changed
-                    if (current_position != last_position) {
+                    // Update display if position or button state changed
+                    if (current_position != last_position || button_pressed != last_btn_state) {
                         g_oled->clear();
 
                         // Title
@@ -217,9 +219,17 @@ void testTask(void* argument) {
                         snprintf(buffer, sizeof(buffer), "Position: %d", current_position);
                         g_oled->drawString(0, 32, buffer, 1);
 
+                        // Button state
+                        if (button_pressed) {
+                            g_oled->drawString(0, 48, "BTN: PRESSED", 1);
+                        } else {
+                            g_oled->drawString(0, 48, "BTN: RELEASED", 1);
+                        }
+
                         g_oled->update();
 
                         last_position = current_position;
+                        last_btn_state = button_pressed;
                     }
                 }
 
@@ -227,6 +237,15 @@ void testTask(void* argument) {
                 int delta = g_encoder->getDelta();
                 if (delta != 0) {
                     Log_Printf("[TEST] Pos: %d, Delta: %d\r\n", current_position, delta);
+                }
+
+                // Log button state changes
+                if (button_pressed != last_btn_state) {
+                    if (button_pressed) {
+                        Log_Printf("[TEST] Button PRESSED\r\n");
+                    } else {
+                        Log_Printf("[TEST] Button RELEASED\r\n");
+                    }
                 }
 
                 // Run at 100Hz in test mode
