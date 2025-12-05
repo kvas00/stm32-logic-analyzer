@@ -201,6 +201,53 @@ void testTask(void* argument) {
                 static int last_position = 0;
                 static bool last_btn_state = true;
                 static bool last_long_press = false;
+                static bool last_pa0_state = true;  // Start as released
+                static bool test_mode_ready = false;  // Flag to indicate PA0 was released
+
+                // Wait for PA0 to be released before activating test mode
+                bool pa0_pressed = (HAL_GPIO_ReadPin(TEST_BTN_GPIO_Port, TEST_BTN_Pin) == GPIO_PIN_RESET);
+
+                if (!test_mode_ready) {
+                    // Waiting for PA0 to be released
+                    if (!pa0_pressed) {
+                        // PA0 released - now test mode is ready
+                        test_mode_ready = true;
+                        last_pa0_state = false;
+                        Log_Printf("[TEST] Test mode ready - PA0 released\r\n");
+                    }
+                    // Show waiting message
+                    if (g_oled != nullptr) {
+                        static bool msg_shown = false;
+                        if (!msg_shown) {
+                            g_oled->clear();
+                            g_oled->drawString(0, 24, "Release PA0...", 1);
+                            g_oled->update();
+                            msg_shown = true;
+                        }
+                    }
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                    continue;
+                }
+
+                // Check PA0 button for exit from test mode (only when test mode is ready)
+                if (pa0_pressed && !last_pa0_state) {
+                    // PA0 pressed - exit test mode
+                    g_test_mode = false;
+                    test_mode_ready = false;
+                    Log_Printf("[TEST] Exit test mode - PA0 pressed\r\n");
+
+                    // Clear display and show message
+                    if (g_oled != nullptr) {
+                        g_oled->clear();
+                        g_oled->drawString(0, 24, "Exiting test...", 1);
+                        g_oled->update();
+                        HAL_Delay(500);
+                    }
+
+                    // Continue to normal mode
+                    continue;
+                }
+                last_pa0_state = pa0_pressed;
 
                 int current_position = g_encoder->getPosition();
                 bool button_pressed = g_encoder->isButtonPressed();
@@ -217,39 +264,47 @@ void testTask(void* argument) {
                     last_long_press = false;
                 }
 
-                // Display test mode info on OLED
-                if (g_oled != nullptr) {
+                // Display test mode info on OLED (update every 50ms max)
+                static uint32_t last_display_update = 0;
+                uint32_t current_time = HAL_GetTick();
+                bool force_update = (current_position != last_position || button_pressed != last_btn_state);
+
+                if (g_oled != nullptr && force_update && (current_time - last_display_update >= 50)) {
                     char buffer[32];
 
-                    // Update display if position or button state changed
-                    if (current_position != last_position || button_pressed != last_btn_state) {
-                        g_oled->clear();
+                    g_oled->clear();
 
-                        // Title
-                        g_oled->drawString(0, 0, "***TEST MODE***", 1);
+                    // Title
+                    g_oled->drawString(0, 0, "***TEST MODE***", 1);
 
-                        // Position
-                        snprintf(buffer, sizeof(buffer), "Position: %d", current_position);
-                        g_oled->drawString(0, 24, buffer, 1);
+                    // Position with delta
+                    int delta = current_position - last_position;
+                    snprintf(buffer, sizeof(buffer), "Pos:%d D:%+d", current_position, delta);
+                    g_oled->drawString(0, 16, buffer, 1);
 
-                        // Button state
-                        if (button_pressed) {
-                            g_oled->drawString(0, 40, "BTN: PRESSED", 1);
-                        } else {
-                            g_oled->drawString(0, 40, "BTN: RELEASED", 1);
-                        }
-
-                        g_oled->update();
-
-                        last_position = current_position;
-                        last_btn_state = button_pressed;
+                    // Button state
+                    if (button_pressed) {
+                        g_oled->drawString(0, 32, "ENC: PRESSED", 1);
+                    } else {
+                        g_oled->drawString(0, 32, "ENC: RELEASED", 1);
                     }
+
+                    // Exit instruction
+                    g_oled->drawString(0, 48, "PA0: EXIT", 1);
+
+                    g_oled->update();
+
+                    last_display_update = current_time;
+                    last_position = current_position;
+                    last_btn_state = button_pressed;
                 }
 
-                // Log encoder changes
+                // Log encoder changes (throttled to avoid flooding)
+                static uint32_t last_log_time = 0;
                 int delta = g_encoder->getDelta();
-                if (delta != 0) {
+                if (delta != 0 && (current_time - last_log_time >= 100)) {
                     Log_Printf("[TEST] Pos: %d, Delta: %d\r\n", current_position, delta);
+                    last_log_time = current_time;
                 }
 
                 // Log button state changes
@@ -261,8 +316,8 @@ void testTask(void* argument) {
                     }
                 }
 
-                // Run at 100Hz in test mode
-                vTaskDelay(pdMS_TO_TICKS(10));
+                // Run at 500Hz in test mode (2ms) for fast encoder response
+                vTaskDelay(pdMS_TO_TICKS(2));
                 continue;  // Skip normal logic analyzer mode
             }
             // === END TEST MODE ===
