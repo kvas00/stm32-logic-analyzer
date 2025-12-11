@@ -23,7 +23,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set the project name
-set(CMAKE_PROJECT_NAME encoder-only)
+set(CMAKE_PROJECT_NAME logic-analyzer)
 
 # Include toolchain file
 include("cmake/gcc-arm-none-eabi.cmake")

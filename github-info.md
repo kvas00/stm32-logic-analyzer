@@ -132,10 +132,10 @@ ninja
 
 ```bash
 # Из директории build
-st-flash write encoder-only.bin 0x8000000
+st-flash write logic-analyzer.bin 0x8000000
 
 # Или указать полный путь
-st-flash write build/encoder-only.bin 0x8000000
+st-flash write build/logic-analyzer.bin 0x8000000
 ```
 
 ### Через OpenOCD

@@ -213,8 +213,11 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  // Check if TEST_BTN (PA0) is pressed at startup (active LOW with pull-up)
-  if (HAL_GPIO_ReadPin(TEST_BTN_GPIO_Port, TEST_BTN_Pin) == GPIO_PIN_RESET) {
+  // Check if TEST_BTN (PA0) or ENCODER_ENTER is pressed at startup (active LOW with pull-up)
+  GPIO_PinState pa0_state = HAL_GPIO_ReadPin(TEST_BTN_GPIO_Port, TEST_BTN_Pin);
+  GPIO_PinState encoder_btn_state = HAL_GPIO_ReadPin(ENCODER_ENTER_GPIO_Port, ENCODER_ENTER_Pin);
+
+  if (pa0_state == GPIO_PIN_RESET || encoder_btn_state == GPIO_PIN_RESET) {
     g_test_mode = true;
   }
 
